@@ -1,0 +1,8 @@
+[hostlist]
+10.10.10.8
+10.241.2.87
+
+[hostlist:vars]
+remote_userid=username
+remote_userid2=cassandra
+pubkey_file=/home/username/.ssh/id_dsa.pub

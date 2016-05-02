@@ -1,0 +1,15 @@
+---
+- hosts: all #Run on all host groups in the inventory
+  user: "{{ remote_userid }}"
+  gather_facts: false
+  sudo: yes
+
+  tasks:
+
+    - name: Add key to remote host
+      #authorized_key: user={{ remote_userid2 }} -- use this in case of multi user key
+      authorized_key: user={{ remote_userid }}
+                      state=present
+                      key="{{ item }}"
+      with_file:
+        - "{{ pubkey_file }}"

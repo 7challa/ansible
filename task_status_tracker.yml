@@ -1,0 +1,19 @@
+---
+- hosts: local
+  any_errors_fatal: true
+  gather_facts: yes
+  remote_user: <remote_user>
+  sudo: yes
+  serial: 1
+  sudo_user: <sudo_user>
+
+  tasks:
+    - local_action: shell if [ -f {{log_root}}/status_file.txt ] ; then cp /dev/null {{log_root}}/status_file.txt ;else touch {{log_root}}/status_file.txt; fi
+
+	# Assert that task has failed
+    - local_action: lineinfile dest={{log_root}}/status_file.txt state=present create=yes line='{{ ansible_hostname }}:{{app_name}}=Failed' 
+
+	# Tasks come here - if any task fails the whole play is deemed fatal and halts the rest of the play execution but leaves an update in {{log_root}}/status_file.txt file as on which host the play failed
+	
+   	# Assert that task has been successful
+    - local_action: lineinfile dest={{log_root}}/status_file.txt state=present create=yes regexp=^{{ ansible_hostname }}:{{app_name}}=Failed line={{ ansible_hostname }}:{{app_name}}=Successful

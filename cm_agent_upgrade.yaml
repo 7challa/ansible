@@ -1,0 +1,70 @@
+# Playbook will:
+# Uninstall CM agent 
+# Add a repo file relevant to RHEL-7
+# Clean yum cache
+# Install CM-5.15.1 agent
+# Update config.ini
+# Start the agent
+
+---
+- hosts: all
+  serial: 1
+  any_errors_fatal: true
+  gather_facts: false
+  sudo: yes
+
+  tasks:
+
+    - name: Uninstall cm agent
+      yum:
+         name: cloudera-manager-agent
+         state: absent
+ 
+    - name: Uninstall cm agent daemons
+      yum:
+         name: cloudera-manager-daemons
+         state: absent
+
+    - name: Copy RHEL-7 repofile
+      copy:
+         src: files/cloudera-manager.repo
+         dest: /etc/yum.repos.d/cloudera-manager.repo
+         owner: root
+         group: root
+ 
+    - name: yum clean all
+      command: yum clean all
+
+    - name: Install cm 15.5.1 agent
+      yum:
+         name: cloudera-manager-agent
+         state: present
+ 
+    - name: Install cm 15.5.1 agent daemons
+      yum:
+         name: cloudera-manager-daemons
+         state: present
+
+# Run this task only on CM Server
+    - name: Install cm 15.5.1 server
+      yum:
+         name: cloudera-manager-server
+         state: present
+
+    - name: Copy config.ini file
+      template: src=templates/{{ item }}.j2 dest=/etc/cloudera-scm-agent/config.ini owner=root group=root mode=0644 backup=yes
+      with_items:
+          - "config.ini"
+      tags:
+         - copy_config_ini_file
+
+
+    - name: Start CM Agent
+      command: systemctl start cloudera-scm-agent 
+      tags:
+         - start_cm_agent
+
+    - name: Check status of CM Agent after restart
+      command: systemctl status cloudera-scm-agent 
+      tags:
+         - check_cmagent_a4tr

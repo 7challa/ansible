@@ -1,0 +1,35 @@
+#AWS instances are started by a python program. Any subsequent tasks depend on the ability to successfully SSH to those started instances
+# This play book will check for SSH connection and it emails in case of a failure. 
+
+---
+- hosts: all
+  gather_facts: false
+  any_errors_fatal: True
+  
+  tasks:
+    - name: Check SSH 
+      block:
+        - name: Wait for connection
+          wait_for_connection:
+                  delay: 5
+                  sleep: 2
+                  timeout: 10
+
+        - debug:
+            msg: 'This message never prints'
+
+      rescue:
+        - name: Sending an e-mail
+          mail:
+            host: <relay_host>
+            from: <from_email>
+            to: <to_email>
+            subject: ERROR Starting AWS Instances 
+            body: There was an ERROR Starting AWS Instances. Please check 
+          run_once: true
+          delegate_to: localhost
+
+      always:
+      # This executes for all the instances in the inventory
+        - debug:
+            msg: "This message always prints"
